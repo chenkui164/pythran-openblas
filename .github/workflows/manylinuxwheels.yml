@@ -7,24 +7,38 @@ jobs:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        python-version: [3.7]
-    container:
-        image: "quay.io/pypa/manylinux2014_i686"
+        os: [ubuntu-20.04]
 
     steps:
-      - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
 
-      - name: Setup Python ${{ matrix.python-version }}
-        run: |
-            pyver=`echo '${{ matrix.python-version }}' | tr -d '.'`
-            pypath=`echo /opt/python/cp${pyver}-cp${pyver}*/bin`
-            export PATH=$pypath:$PATH
-            python -m pip install wheel
-            python setup.py bdist_wheel --plat-name=manylinux2014_i686 --universal
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
 
-      - uses: actions/upload-artifact@v2
-        with:
-          name: Upload wheels
-          path: dist/
+    - name: Build wheels
+      uses: pypa/cibuildwheel@v2.8.1
+      env:
+        CIBW_BUILD_FRONTEND: "build"
+        # CIBW_ARCHS_MACOS: x86_64 universal2 arm64
+        # CIBW_ARCHS_LINUX: x86_64 i686
+        # CIBW_BEFORE_BUILD: yum -y install fftw-devel
+        CIBW_SKIP: pp*
+        CIBW_BUILD: "*-manylinux_x86_64"
+
+    - name: Show files
+      run: ls -lh wheelhouse
+      shell: bash
+
+    - name: Verify clean directory
+      run: git diff --exit-code
+      shell: bash
+
+    - name: Upload wheels
+      uses: actions/upload-artifact@v3
+      with:
+        path: wheelhouse/*.whl
