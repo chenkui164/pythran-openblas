@@ -11,7 +11,7 @@ jobs:
         os: [ubuntu-latest]
         python-version: [3.7]
     container:
-        image: "quay.io/pypa/manylinux2014_x86_64"
+        image: "quay.io/pypa/manylinux2014_i686"
 
     steps:
       - uses: actions/checkout@v2
@@ -22,7 +22,7 @@ jobs:
             pypath=`echo /opt/python/cp${pyver}-cp${pyver}*/bin`
             export PATH=$pypath:$PATH
             python -m pip install wheel
-            python setup.py bdist_wheel --plat-name=manylinux2014_x86_64 --universal
+            python setup.py bdist_wheel --plat-name=manylinux2014_i686 --universal
 
       - uses: actions/upload-artifact@v2
         with:
